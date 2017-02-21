@@ -37,7 +37,7 @@ dir="$(dirname "$0")"
 . $dir/functions/thirdparty
 . $dir/functions/update
 #. $dir/functions/utilities
-#. $dir/functions/server
+. $dir/functions/server
 #. $dir/functions/basic
 
 #----- Fancy Messages -----#
