@@ -8,6 +8,8 @@
 
 dir="$(dirname "$0")"
 LOG_DIR=${dir}/log
+SUCCES_LOG=${LOG_DIR}/success.log
+ERROR_LOG=${LOG_DIR}/error.log
 DS_HOME='/media/dshome'
 DS_MEDIA='/media/dsmedia'
 DS_BACKUP='/media/dsbackup'
@@ -43,10 +45,6 @@ function network_drives {
 		show_info 'Proceeding...'
 	fi
 
-	# clear error log
-	rm $LOG_DIR/teste_success.log
-	rm $LOG_DIR/teste_error.log
-
 	show_info 'Configuring network drives...'
 	show_warning 'Requires root privileges'
 
@@ -71,11 +69,11 @@ function network_drives {
 			#sudo bash -c 'echo "$DS414_IP	ds414" >> /etc/hosts'
 			echo "$DS414_IP	ds414" | sudo tee -a /etc/hosts
 			show_info '/etc/hosts configured...'
-			echo "Success DS414 IPv4: $DS414_IP" >> $LOG_DIR/teste_success.log
+			echo "Success DS414 IPv4: $DS414_IP" >> $SUCCES_LOG
 		else
 			show_info '/etc/hosts was already configured.'
 			show_info "Current configuration: $EXIST"
-			echo "/etc/hosts was already configured. Current configuration: $EXIST" >> $LOG_DIR/teste_success.log
+			echo "/etc/hosts was already configured. Current configuration: $EXIST" >> $SUCCES_LOG
 		fi
 	else
 		show_warning 'Error configuring /etc/hosts...'
@@ -85,29 +83,29 @@ function network_drives {
 	# Create correct directories
 	if [ -d "$DS_HOME" ]; then
 		show_info "Directory $DS_HOME already exists. Skiping..."
-		echo "Directory $DS_HOME already existed in the system." >> $LOG_DIR/teste_success.log
+		echo "Directory $DS_HOME already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_HOME
 		show_info "Directory $DS_HOME created."
-		echo "Success creating $DS_HOME directory" >> $LOG_DIR/teste_success.log
+		echo "Success creating $DS_HOME directory" >> $SUCCES_LOG
 	fi
 
 	if [ -d "$DS_MEDIA" ]; then
 		show_info "Directory $DS_MEDIA already exists. Skiping..."
-		echo "Directory $DS_MEDIA already existed in the system." >> $LOG_DIR/teste_success.log
+		echo "Directory $DS_MEDIA already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_MEDIA
 		show_info "Directory $DS_MEDIA created."
-		echo "Success creating $DS_MEDIA directory" >> $LOG_DIR/teste_success.log
+		echo "Success creating $DS_MEDIA directory" >> $SUCCES_LOG
 	fi
 
 	if [ -d "$DS_BACKUP" ]; then
 		show_info "Directory $DS_BACKUP already exists. Skiping..."
-		echo "Directory $DS_BACKUP already existed in the system." >> $LOG_DIR/teste_success.log
+		echo "Directory $DS_BACKUP already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_BACKUP
 		show_info "Directory $DS_BACKUP created."
-		echo "Success creating $DS_BACKUP directory" >> $LOG_DIR/teste_success.log
+		echo "Success creating $DS_BACKUP directory" >> $SUCCES_LOG
 	fi
 
 	# Create and configure credentials file	
@@ -127,7 +125,7 @@ function network_drives {
 	sudo chmod o-r /root/.cifscredentials
 
 	show_info '.cifscredentials configured.'
-	echo "Success creating /root/.cifscredentials" >> $LOG_DIR/teste_success.log
+	echo "Success creating /root/.cifscredentials" >> $SUCCES_LOG
 
 
 	# Insert paths in /etc/fstab
@@ -135,30 +133,26 @@ function network_drives {
 	sudo echo "//ds414/home /media/dshome cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
 	sudo echo "//ds414/Backup /media/dsbackup cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
 
-	echo "Success editing /etc/fstab" >> $LOG_DIR/teste_success.log
+	echo "Success editing /etc/fstab" >> $SUCCES_LOG
 
 	# Mount everything
 	sudo mount -a
 
-	echo "Success configuring network drives" >> $LOG_DIR/teste_success.log
+	echo "Success configuring network drives" >> $SUCCES_LOG
 
 	pause
 
 	# Done
         # Check
-        EXITSTATUS=$1
-        if [[ $EXITSTATUS != 0 ]]; then
-            # Error mounting drives
-            show_success 'Network drives already installed.'
-            whiptail --title "Finished" --msgbox "Network drives are installed." 8 78
-            main
-        else
-            whiptail --title "Finished" --msgbox "Installation complete." 8 78
-           main
-        fi
+#        EXITSTATUS=$1
+#        if [[ $EXITSTATUS != 0 ]]; then
+#            # Error mounting drives
+#            show_success 'Network drives already installed.'
+#        else
+#            show_success 'Installation complete.'
+#        fi
 
 	show_success 'Done.'
-	whiptail --title "Finished" --msgbox "Network drives created successfully." 8 78
 	config_server
 }
 
