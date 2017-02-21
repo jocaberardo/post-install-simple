@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Perform packages upgrade via apt-get
+function update_packages {
+	clear
+
+	show_question 'Proceed with packages update? (Y)es, (N)o : ' && read REPLY
+
+	echo ''
+	case $REPLY in
+	# Positive action
+	[Yy]* ) 
+		show_warning 'Requires root privileges'
+		show_info 'Updating repository information...'
+
+		# Update repository information
+		sudo apt-get clean
+		sudo apt-get update
+		show_success 'Done.'
+
+		# Upgrade packages
+		show_info 'Performing packages update...'
+		sudo apt-get upgrade -yf
+		sudo apt-get autoremove -y
+
+		# Failure check
+		#check_fail
+		show_success "Package update comlete."
+		;;
+		# Negative action
+	[Nn]* )
+		show_info "Exiting..."
+		update
+		    ;;
+		# Error
+	* )
+		show_error '\aSorry, try again.' && pause
+		update
+	    ;;
+	esac
+
+	EXITSTATUS=$1
+	if [[ $EXITSTATUS != 0 ]]; then
+		# Already up-to-date
+		show_success 'Already up-to-date.'
+		pause
+		update
+	else
+		show_info 'Packges update complete.'
+		pause
+		update
+	fi
+}
+
+# Perform system upgrade via apt-get
+function update_system {
+	clear
+
+	show_question 'Proceed with system update? (Y)es, (N)o : ' && read REPLY
+
+	echo ''
+	case $REPLY in
+	# Positive action
+	[Yy]* ) 
+		show_info 'Updating repository information...'
+		show_warning 'Requires root privileges'
+
+		# Update repository information
+		sudo apt-get clean
+		sudo apt-get update
+		show_success 'Done.'
+
+		# Upgrade packages
+		show_info 'Performing system update...'
+		sudo apt-get dist-upgrade -y
+		sudo apt-get autoremove -y
+
+		# Failure check
+		#check_fail
+		;;
+		# Negative action
+	[Nn]* )
+		show_info "Exiting..."
+		update
+		    ;;
+		# Error
+	* )
+	    show_error '\aSorry, try again.' && check_package
+	    ;;
+	esac
+
+	EXITSTATUS=$1
+	if [[ $EXITSTATUS != 0 ]]; then
+		# Already up-to-date
+		show_success 'Already up-to-date.'
+		pause
+		update
+	else
+		show_info 'System update complete.'
+		pause
+		update
+	fi
+}
+
+# Update
+function update {
+    clear
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "  Configure System   "
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "1.  Update packages"
+	echo "2.  Update system"
+	echo "3.  Back"
+	echo "4.  Exit"
+
+	local choice
+	read -p "Enter choice [ 1 - 4] " choice
+	case $choice in
+		1) update_packages ;;
+		2) update_system ;;
+		3) main ;;
+		4) quit ;;
+		*) echo -e "${RED}Error...${STD}" && sleep 2
+	esac
+}

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+dir="$(dirname "$0")"
+
+source $dir/functions/third-party/atom
+source $dir/functions/third-party/brackets
+source $dir/functions/third-party/dropbox
+source $dir/functions/third-party/eclipse
+source $dir/functions/third-party/google-chrome
+source $dir/functions/third-party/oracle-java
+source $dir/functions/third-party/spotify
+source $dir/functions/third-party/sublime-text
+source $dir/functions/third-party/virtualbox
+source $dir/functions/third-party/vlc
+
+
+# Install Third-Party Applications
+function thirdparty {
+	clear
+	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	echo " Third-Party Installation "
+	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~"
+	echo "1.   Atom"
+	echo "2.   Brackets"
+	echo "3.   Dropbox"
+	echo "4.   Eclipse"
+	echo "5.   Google Chrome"
+	echo "6    Oracle Java"
+	echo "7.   Spotify"
+	echo "8.   Sublime Text 3"
+	echo "9.   Virtual Box"
+	echo "10.  VLC Player"
+	echo "11.  Back"
+	echo "12.  Quit"
+
+	local choice
+	read -p "Enter choice [ 1 - 12] " choice
+	case $choice in
+		1) atom ;;
+		2) brackets ;;
+		3) dropbox ;;
+		4) eclipse ;;
+		5) google-chrome ;;
+		6) oracle-java ;;
+		7) spotify ;;
+		8) sublime-text ;;
+		9) virtualbox ;;
+		10) vlc ;;
+		11) main ;;
+		12) quit ;;
+		*) echo -e "${RED}Error...${STD}" && sleep 2
+	esac
+}

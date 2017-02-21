@@ -30,17 +30,20 @@ clear
 dir="$(dirname "$0")"
 
 . $dir/functions/check
-. $dir/functions/cleanup
-. $dir/functions/configure
-. $dir/functions/development
-. $dir/functions/favs
+#. $dir/functions/cleanup
+#. $dir/functions/configure
+#. $dir/functions/development
+#. $dir/functions/favs
 . $dir/functions/thirdparty
 . $dir/functions/update
-. $dir/functions/utilities
-. $dir/functions/server
-. $dir/functions/basic
+#. $dir/functions/utilities
+#. $dir/functions/server
+#. $dir/functions/basic
 
 #----- Fancy Messages -----#
+RED='\033[0;41;30m'
+STD='\033[0;0;39m'
+
 show_error(){
 echo -e "\033[1;31m$@\033[m" 1>&2
 }
@@ -62,44 +65,90 @@ echo -e "\033[1;36m$@\033[0m"
 show_listitem(){
 echo -e "\033[0;37m$@\033[0m"
 }
+pause(){
+    read -p "Press [Enter] key to continue..." #fackEnterKey
+}
+
+show_menus() {
+    clear
+	echo "~~~~~~~~~~~~~~~~~~~~~"	
+	echo " M A I N - M E N U"
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "1.    Perform system update"
+	echo "2.    Install preferred applications"
+	echo "3.    Install preferred system utilities"
+	echo "4.    Install preferred development tools"
+	echo "5.    Install third-party applications"
+	echo "6.    Configure system"
+	echo "7.    Cleanup the system"
+	echo "8.    Configure Server"
+	echo "9.    Basic test"
+	echo "10.   Exit"
+}
 
 # Main
 function main {
-    eval `resize`
-    MAIN=$(whiptail \
-        --notags \
-        --title "Ubuntu Post-Install Script" \
-        --menu "\nWhat would you like to do?" \
-        --cancel-button "Quit" \
-        $LINES $COLUMNS $(( $LINES - 12 )) \
-        update      'Perform system update' \
-        favs        'Install preferred applications' \
-        utilities   'Install preferred system utilities' \
-        development 'Install preferred development tools' \
-        thirdparty  'Install third-party applications' \
-        configure   'Configure system' \
-        cleanup     'Cleanup the system' \
-        config_server     'Configure Server' \
-        basic     'Basic test' \
-        3>&1 1>&2 2>&3)
+
+
+    # read input from the keyboard and take a action
+    read_options(){
+	    local choice
+	    read -p "Enter choice [ 1 - 10] " choice
+	    case $choice in
+		    1) update ;;
+		    2) favs ;;
+            4) utilities ;;
+            5) thirdparty ;;
+            6) configure ;;
+            7) cleanup ;;
+            8) config_server ;;
+            9) basic ;;
+		    10) quit ;;
+		    *) echo -e "${RED}Error...${STD}" && sleep 2
+	    esac
+    }
+ 
+    trap '' SIGINT SIGQUIT SIGTSTP
+
+    while true
+    do
      
-    exitstatus=$?
-    if [ $exitstatus = 0 ]; then
-        $MAIN
-    else
-        quit
-    fi
+	    show_menus
+	    read_options
+    done
+
+#    eval `resize`
+#    MAIN=$(whiptail \
+#        --notags \
+#        --title "Ubuntu Post-Install Script" \
+#        --menu "\nWhat would you like to do?" \
+#        --cancel-button "Quit" \
+#        $LINES $COLUMNS $(( $LINES - 12 )) \
+#        update      'Perform system update' \
+#        favs        'Install preferred applications' \
+#        utilities   'Install preferred system utilities' \
+#        development 'Install preferred development tools' \
+#        thirdparty  'Install third-party applications' \
+#        configure   'Configure system' \
+#        cleanup     'Cleanup the system' \
+#        config_server     'Configure Server' \
+#        basic     'Basic test' \
+#        3>&1 1>&2 2>&3)
+     
+#    exitstatus=$?
+#    if [ $exitstatus = 0 ]; then
+#        $MAIN
+#    else
+#        quit
+#    fi
 }
 
 # Quit
 function quit {
-    if (whiptail --title "Quit" --yesno "Are you sure you want quit?" 10 60) then
-        echo "Exiting..."
-        show_info 'Thanks for using!'
-        exit 99
-    else
-        main
-    fi
+#    if (whiptail --title "Quit" --yesno "Are you sure you want quit?" 10 60) then
+    echo "Exiting..."
+    show_info 'Thanks for using!'
+    exit 99
 }
 
 #RUN

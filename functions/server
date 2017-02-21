@@ -1,0 +1,264 @@
+#!/bin/bash
+
+#
+# CHECK FOR cifs-utils
+# IF NOT INSTALLED, ASK IF USER WANTS TO INSTALL IT
+#
+
+
+dir="$(dirname "$0")"
+LOG_DIR=${dir}/log
+DS_HOME='/media/dshome'
+DS_MEDIA='/media/dsmedia'
+DS_BACKUP='/media/dsbackup'
+
+# Create network drives
+function network_drives {
+	# Check if cifs-utils is installed
+	echo 'Checking if cifs-utils is already installed...'
+	PKGCHECK=$(dpkg-query -W --showformat='${Status}\n cifs-utils'|grep "install ok installed")
+	if [ "" == "$PKGCHECK" ]; then
+		show_info "This script requires cifs-utils and it is not present on your system."
+		show_question 'Would you like to install it to continue? (Y)es, (N)o : ' && read REPLY
+		echo ''
+		case $REPLY in
+		# Positive action
+		[Yy]* ) 
+		    show_warning 'Requires root privileges'
+		    sudo apt-get -y install cifs-utils
+		    show_success "Package cifs-utils installed. Proceeding..."
+		    ;;
+		# Negative action
+		[Nn]* )
+		    config_server
+		    ;;
+		# Error
+		* )
+		    show_error '\aSorry, try again.' && check
+		    ;;
+		esac
+	else
+		# Already installed
+		show_success 'cifs-utils already installed.'
+		show_info 'Proceeding...'
+	fi
+
+	# clear error log
+	rm $LOG_DIR/teste_success.log
+	rm $LOG_DIR/teste_error.log
+
+	show_info 'Configuring network drives...'
+	show_warning 'Requires root privileges'
+
+
+	show_info 'Backing up files...'
+	# Backup files first
+	sudo cp /etc/hosts /etc/hosts.old
+	sudo cp /etc/fstab /etc/fstab.old
+	show_info 'Done.'
+
+	# Insert Synology in hosts file
+	show_question 'What is the ip address? ' && read DS414_IP
+
+	exitstatus=$?
+	if [ $exitstatus = 0 ]; then
+		echo "Your IP address is: $DS414_IP"
+
+		EXIST=`cat /etc/hosts | grep ds414`
+
+		if ["" -eq $EXIST]; then
+			#echo "$DS414_IP	ds414" >> /etc/hosts
+			#sudo bash -c 'echo "$DS414_IP	ds414" >> /etc/hosts'
+			echo "$DS414_IP	ds414" | sudo tee -a /etc/hosts
+			show_info '/etc/hosts configured...'
+			echo "Success DS414 IPv4: $DS414_IP" >> $LOG_DIR/teste_success.log
+		else
+			show_info '/etc/hosts was already configured.'
+			show_info "Current configuration: $EXIST"
+			echo "/etc/hosts was already configured. Current configuration: $EXIST" >> $LOG_DIR/teste_success.log
+		fi
+	else
+		show_warning 'Error configuring /etc/hosts...'
+		echo "Error DS414 $DS414_IP" >> $LOG_DIR/teste_error.log
+	fi
+
+	# Create correct directories
+	if [ -d "$DS_HOME" ]; then
+		show_info "Directory $DS_HOME already exists. Skiping..."
+		echo "Directory $DS_HOME already existed in the system." >> $LOG_DIR/teste_success.log
+	else
+		sudo mkdir $DS_HOME
+		show_info "Directory $DS_HOME created."
+		echo "Success creating $DS_HOME directory" >> $LOG_DIR/teste_success.log
+	fi
+
+	if [ -d "$DS_MEDIA" ]; then
+		show_info "Directory $DS_MEDIA already exists. Skiping..."
+		echo "Directory $DS_MEDIA already existed in the system." >> $LOG_DIR/teste_success.log
+	else
+		sudo mkdir $DS_MEDIA
+		show_info "Directory $DS_MEDIA created."
+		echo "Success creating $DS_MEDIA directory" >> $LOG_DIR/teste_success.log
+	fi
+
+	if [ -d "$DS_BACKUP" ]; then
+		show_info "Directory $DS_BACKUP already exists. Skiping..."
+		echo "Directory $DS_BACKUP already existed in the system." >> $LOG_DIR/teste_success.log
+	else
+		sudo mkdir $DS_BACKUP
+		show_info "Directory $DS_BACKUP created."
+		echo "Success creating $DS_BACKUP directory" >> $LOG_DIR/teste_success.log
+	fi
+
+	# Create and configure credentials file	
+	sudo touch /root/.cifscredentials
+
+	# promtp user name
+	show_question 'Please enter .cifscredentials username: ' && read USER
+	# USER=$(whiptail --title "username" --inputbox "Please enter the username: " 10 60 3>&1 1>&2 2>&3)
+	# echo "$DS414_IP	ds414" | sudo tee -a /etc/hosts
+	echo "username=$USER" | sudo tee -a /root/.cifscredentials
+	show_question 'Please enter .cifscredentials password: ' && read PASS
+	# PASS=$(whiptail --title "username" --passwordbox "Please enter the password: " 10 60 3>&1 1>&2 2>&3)
+	# sudo echo "password=" $PASS >> /root/.cifscredentials
+	echo "password=$PASS" | sudo tee -a /root/.cifscredentials
+
+	# Set permissions
+	sudo chmod o-r /root/.cifscredentials
+
+	show_info '.cifscredentials configured.'
+	echo "Success creating /root/.cifscredentials" >> $LOG_DIR/teste_success.log
+
+
+	# Insert paths in /etc/fstab
+	sudo echo "//ds414/media /media/dsmedia cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
+	sudo echo "//ds414/home /media/dshome cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
+	sudo echo "//ds414/Backup /media/dsbackup cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
+
+	echo "Success editing /etc/fstab" >> $LOG_DIR/teste_success.log
+
+	# Mount everything
+	sudo mount -a
+
+	echo "Success configuring network drives" >> $LOG_DIR/teste_success.log
+
+	# Done
+        # Check
+        EXITSTATUS=$1
+        if [[ $EXITSTATUS != 0 ]]; then
+            # Error mounting drives
+            show_success 'Network drives already installed.'
+            whiptail --title "Finished" --msgbox "Network drives are installed." 8 78
+            main
+        else
+            whiptail --title "Finished" --msgbox "Installation complete." 8 78
+           main
+        fi
+
+	show_success 'Done.'
+	whiptail --title "Finished" --msgbox "Network drives created successfully." 8 78
+	config_server
+}
+
+# Install plex media server
+function plex {
+    INSTALL_FILE='plexmediaserver_1.3.4.3285-b46e0ea_amd64.deb'
+    BACKUP_DIR='/media/dsbackup/mediaserver/plexmediaserver'
+    LOCAL_DIR='/var/lib/plexmediaserver'
+
+    show_info 'Installing plex...'
+    show_warning 'Requires root privileges'
+
+    # Download and install Plex Media Server
+    cd ~/
+    mkdir plex && cd plex
+    
+    wget https://downloads.plex.tv/plex-media-server/1.3.4.3285-b46e0ea/$INSTALL_FILE
+    sudo dpkg -i $INSTALL_FILE
+    	
+    sudo rm -r plex
+
+    # Restore backed up files
+    {
+        sudo cp -R $BACKUP_DIR $LOCAL_DIR
+    } | whiptail --gauge "Please wait while restoring plex files..." 6 60 0
+
+   sudo service plexmediaserver restart
+
+    # Done
+    show_success 'Done.'
+    whiptail --title "Finished" --msgbox "Settings changed successfully." 8 78
+    config_server
+}
+
+# Install SSH Server
+function conf_ssh {
+    show_info 'Installing ssh server...'
+    show_warning 'Requires root privileges'
+
+    {
+        sudo apt-get update
+        sudo apt-get install -fy openssh-client openssh-server
+        sed 's/Port 22/Port 33/g'
+        sed 's/PermitRootLogin prohibit-password/PermitRootLogin no/g'
+    } | whiptail --gauge "Please wait while ssh server is being installed..." 6 60 0
+
+    # Done
+    show_success 'Done.'
+    whiptail --title "Finished" --msgbox "Installed successfully." 8 78
+    config_server
+}
+
+# Install apache server
+function conf_apache {
+    show_info 'Changing system-wide sources.list...'
+    show_warning 'Requires root privileges'
+    sudo cp -r $dir/data/sources.list /etc/apt
+    # Update repository information
+    show_info 'Updating repository information...'
+    show_warning 'Requires root privileges'
+    sudo apt-get update
+    # Done
+    show_success 'Done.'
+    whiptail --title "Finished" --msgbox "Sources list changed successfully." 8 78
+    configure
+}
+
+# Install mysql server
+function conf_mysql {
+    show_info 'Disabling apport crash dialogs...'
+    show_warning 'Requires root privileges'
+    sudo sed -i "s/enabled=1/enabled=0/g" /etc/default/apport
+    # Done
+    show_success 'Done.'
+    whiptail --title "Finished" --msgbox "Settings changed successfully." 8 78
+    config_server
+}
+
+# Configure Server
+function config_server {
+	clear
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "  Configure System   "
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "1.   Configure network drives at Synology"
+	echo "2.   Install Plex Media Server"
+	echo "3.   Install and configure SSH server"
+	echo "4.   Install and configure Apache"
+	echo "5.   Install and configure mysql"
+	echo "6.   Back"
+	echo "7.   Quit"
+
+	local choice
+	read -p "Enter choice [ 1 - 6] " choice
+	case $choice in
+		1) network_drives ;;
+		2) plex ;;
+		3) conf_ssh ;;
+		4) conf_apache ;;
+		5) conf_mysql ;;
+		6) main ;;
+		7) quit ;;
+		*) echo -e "${RED}Error...${STD}" && sleep 2
+	esac
+}
