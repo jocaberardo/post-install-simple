@@ -142,6 +142,8 @@ function network_drives {
 
 	echo "Success configuring network drives" >> $LOG_DIR/teste_success.log
 
+	pause
+
 	# Done
         # Check
         EXITSTATUS=$1
