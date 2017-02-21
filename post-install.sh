@@ -108,7 +108,7 @@ function main {
 	    esac
     }
  
-    trap '' SIGINT SIGQUIT SIGTSTP
+    #trap '' SIGINT SIGQUIT SIGTSTP
 
     while true
     do

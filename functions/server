@@ -18,9 +18,7 @@ DS_BACKUP='/media/dsbackup'
 function network_drives {
 	# Check if cifs-utils is installed
 	echo 'Checking if cifs-utils is already installed...'
-	PKGCHECK=$(dpkg-query -W 'cifs-utils'|grep "dpkg")
-	echo $PKGCHECK
-	pause
+	PKGCHECK=$(dpkg-query -W 'cifs-utils'|grep "cifs")
 	if [ "" == "$PKGCHECK" ]; then
 		show_info "This script requires cifs-utils and it is not present on your system."
 		show_question 'Would you like to install it to continue? (Y)es, (N)o : ' && read REPLY
