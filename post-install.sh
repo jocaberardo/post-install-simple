@@ -25,8 +25,6 @@
 tabs 4
 clear
 
-#seila
-
 #----- Import Functions -----#
 
 dir="$(dirname "$0")"
