@@ -41,6 +41,7 @@ function network_drives {
 		esac
 	else
 		# Already installed
+		echo "[${date}] cifs-utils already installed." >> $SUCCES_LOG
 		show_success 'cifs-utils already installed.'
 		show_info 'Proceeding...'
 	fi
@@ -69,43 +70,43 @@ function network_drives {
 			#sudo bash -c 'echo "$DS414_IP	ds414" >> /etc/hosts'
 			echo "$DS414_IP	ds414" | sudo tee -a /etc/hosts
 			show_info '/etc/hosts configured...'
-			echo "Success DS414 IPv4: $DS414_IP" >> $SUCCES_LOG
+			echo "[${date}] Success DS414 IPv4: $DS414_IP" >> $SUCCES_LOG
 		else
 			show_info '/etc/hosts was already configured.'
 			show_info "Current configuration: $EXIST"
-			echo "/etc/hosts was already configured. Current configuration: $EXIST" >> $SUCCES_LOG
+			echo "[${date}] /etc/hosts was already configured. Current configuration: $EXIST" >> $SUCCES_LOG
 		fi
 	else
 		show_warning 'Error configuring /etc/hosts...'
-		echo "Error DS414 $DS414_IP" >> $LOG_DIR/teste_error.log
+		echo "[${date}] Error DS414 $DS414_IP" >> $ERROR_LOG
 	fi
 
 	# Create correct directories
 	if [ -d "$DS_HOME" ]; then
 		show_info "Directory $DS_HOME already exists. Skiping..."
-		echo "Directory $DS_HOME already existed in the system." >> $SUCCES_LOG
+		echo "[${date}] Directory $DS_HOME already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_HOME
 		show_info "Directory $DS_HOME created."
-		echo "Success creating $DS_HOME directory" >> $SUCCES_LOG
+		echo "[${date}] Success creating $DS_HOME directory" >> $SUCCES_LOG
 	fi
 
 	if [ -d "$DS_MEDIA" ]; then
 		show_info "Directory $DS_MEDIA already exists. Skiping..."
-		echo "Directory $DS_MEDIA already existed in the system." >> $SUCCES_LOG
+		echo "[${date}] Directory $DS_MEDIA already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_MEDIA
 		show_info "Directory $DS_MEDIA created."
-		echo "Success creating $DS_MEDIA directory" >> $SUCCES_LOG
+		echo "[${date}] Success creating $DS_MEDIA directory" >> $SUCCES_LOG
 	fi
 
 	if [ -d "$DS_BACKUP" ]; then
 		show_info "Directory $DS_BACKUP already exists. Skiping..."
-		echo "Directory $DS_BACKUP already existed in the system." >> $SUCCES_LOG
+		echo "[${date}] Directory $DS_BACKUP already existed in the system." >> $SUCCES_LOG
 	else
 		sudo mkdir $DS_BACKUP
 		show_info "Directory $DS_BACKUP created."
-		echo "Success creating $DS_BACKUP directory" >> $SUCCES_LOG
+		echo "[${date}] Success creating $DS_BACKUP directory" >> $SUCCES_LOG
 	fi
 
 	# Create and configure credentials file	
@@ -125,7 +126,7 @@ function network_drives {
 	sudo chmod o-r /root/.cifscredentials
 
 	show_info '.cifscredentials configured.'
-	echo "Success creating /root/.cifscredentials" >> $SUCCES_LOG
+	echo "[${date}] Success creating /root/.cifscredentials" >> $SUCCES_LOG
 
 
 	# Insert paths in /etc/fstab
@@ -133,12 +134,12 @@ function network_drives {
 	sudo echo "//ds414/home /media/dshome cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
 	sudo echo "//ds414/Backup /media/dsbackup cifs auto,uid=1000,iocharset=utf8,gid=users,credentials=/root/.cifscredentials,file_mode=0775,dir_mode=0775 0 0" | sudo tee -a /etc/fstab
 
-	echo "Success editing /etc/fstab" >> $SUCCES_LOG
+	echo "[${date}] Success editing /etc/fstab" >> $SUCCES_LOG
 
 	# Mount everything
 	sudo mount -a
 
-	echo "Success configuring network drives" >> $SUCCES_LOG
+	echo "[${date}] Success configuring network drives" >> $SUCCES_LOG
 
 	pause
 
@@ -171,19 +172,36 @@ function plex {
     
     wget https://downloads.plex.tv/plex-media-server/1.3.4.3285-b46e0ea/$INSTALL_FILE
     sudo dpkg -i $INSTALL_FILE
-    	
-    sudo rm -r plex
 
-    # Restore backed up files
-    {
-        sudo cp -R $BACKUP_DIR $LOCAL_DIR
-    } | whiptail --gauge "Please wait while restoring plex files..." 6 60 0
+    sudo rm -r plex    
+    cd -
 
-   sudo service plexmediaserver restart
+    show_question 'Restore plex backup? (Y)es, (N)o : ' && read REPLY
+	echo ''
+	case $REPLY in
+	# Positive action
+	[Yy]* ) 
+	    show_warning 'Requires root privileges'
+	    # Restore backed up files
+            sudo cp -R $BACKUP_DIR $LOCAL_DIR
+	    show_success "Restore completed. Proceeding..."
+	    ;;
+	# Negative action
+	[Nn]* )
+	    config_server
+	    ;;
+	# Error
+	* )
+	    show_error '\aSorry, try again.' && check
+	    ;;
+	esac
+
+    show_info 'Restarting plex media server...'
+    sudo service plexmediaserver restart
 
     # Done
     show_success 'Done.'
-    whiptail --title "Finished" --msgbox "Settings changed successfully." 8 78
+    pause
     config_server
 }
 
