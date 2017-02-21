@@ -71,7 +71,7 @@ pause(){
 
 show_menus() {
     clear
-	echo "~~~~~~~~~~~~~~~~~~~~~"	
+	echo "~~~~~~~~~~~~~~~~~~~~~"
 	echo " M A I N - M E N U"
 	echo "~~~~~~~~~~~~~~~~~~~~~"
 	echo "1.    Perform system update"
@@ -107,45 +107,19 @@ function main {
 		    *) echo -e "${RED}Error...${STD}" && sleep 2
 	    esac
     }
- 
+
     #trap '' SIGINT SIGQUIT SIGTSTP
 
     while true
     do
-     
+
 	    show_menus
 	    read_options
     done
-
-#    eval `resize`
-#    MAIN=$(whiptail \
-#        --notags \
-#        --title "Ubuntu Post-Install Script" \
-#        --menu "\nWhat would you like to do?" \
-#        --cancel-button "Quit" \
-#        $LINES $COLUMNS $(( $LINES - 12 )) \
-#        update      'Perform system update' \
-#        favs        'Install preferred applications' \
-#        utilities   'Install preferred system utilities' \
-#        development 'Install preferred development tools' \
-#        thirdparty  'Install third-party applications' \
-#        configure   'Configure system' \
-#        cleanup     'Cleanup the system' \
-#        config_server     'Configure Server' \
-#        basic     'Basic test' \
-#        3>&1 1>&2 2>&3)
-     
-#    exitstatus=$?
-#    if [ $exitstatus = 0 ]; then
-#        $MAIN
-#    else
-#        quit
-#    fi
 }
 
 # Quit
 function quit {
-#    if (whiptail --title "Quit" --yesno "Are you sure you want quit?" 10 60) then
     echo "Exiting..."
     show_info 'Thanks for using!'
     exit 99
