@@ -161,7 +161,7 @@ function network_drives {
 function plex {
     INSTALL_FILE='plexmediaserver_1.3.4.3285-b46e0ea_amd64.deb'
     BACKUP_DIR='/media/dsbackup/mediaserver/plexmediaserver'
-    LOCAL_DIR='/var/lib/plexmediaserver'
+    LOCAL_DIR='/var/lib/'
 
     show_info 'Installing plex...'
     show_warning 'Requires root privileges'
@@ -183,7 +183,9 @@ function plex {
 	[Yy]* ) 
 	    show_warning 'Requires root privileges'
 	    # Restore backed up files
-            sudo cp -R $BACKUP_DIR $LOCAL_DIR
+            #sudo cp -R $BACKUP_DIR $LOCAL_DIR
+	    rsync -a --info=progress2 $BACKUP_DIR $LOCAL_DIR
+	    pause
 	    show_success "Restore completed. Proceeding..."
 	    ;;
 	# Negative action
