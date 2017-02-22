@@ -18,7 +18,7 @@ function check_fail {
 function check_dependencies {
     show_info "Checking dependencies..."
     for package in $(cat $DEPS)
-    do 
+    do
     PKGCHECK=$(dpkg-query -W --showformat='${Status}\n' $package|grep "install ok installed")
     if [ "" == "$PKGCHECK" ]; then
         show_info $NAME 'is not installed. Proceeding'
@@ -27,11 +27,9 @@ function check_dependencies {
         echo ''
         case $REPLY in
         # Positive action
-        [Yy]* ) 
+        [Yy]* )
             show_warning 'Requires root privileges'
             sudo apt-get -y install $package
-            # Failure check
-            check_fail
             show_success "Package '$package' installed. Proceeding."
             ;;
         # Negative action
