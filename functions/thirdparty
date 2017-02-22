@@ -36,7 +36,7 @@ function thirdparty {
 	local choice
 	read -p "Enter choice [ 1 - 12] " choice
 	case $choice in
-		1) atom ;;
+		1) inst-atom ;;
 		2) brackets ;;
 		3) dropbox ;;
 		4) eclipse ;;
